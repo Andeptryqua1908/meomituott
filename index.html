@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mèo Mít Ướt — Trò Chơi Chăm Sóc Mèo</title>
+  <style>
+    :root {
+      --bg-outer: linear-gradient(160deg, #fff1e6 0%, #fde2e4 50%, #e2ece9 100%);
+      --card-bg: #fffdf9;
+      --ink: #3d2c2e;
+      --muted: #7c676a;
+      --pink: #ff8fab;
+      --pink-deep: #fb6f92;
+      --peach: #ffb5a7;
+      --mint: #52b788;
+      --sky: #4cc9f0;
+      --tear: #3a86ff;
+      --amber: #f4a261;
+      --danger: #e63946;
+      --shadow: 0 18px 50px rgba(84, 52, 58, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-outer);
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      position: relative;
+      width: min(100vw, 500px);
+      height: min(100vh, 880px);
+      max-height: 100dvh;
+      background: var(--card-bg);
+      border-radius: 28px;
+      box-shadow: var(--shadow), 0 0 0 3px rgba(255, 255, 255, 0.85);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: 100vw;
+        height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    /* Top Header & Cry Timer */
+    .top-bar {
+      padding: 12px 14px 8px;
+      background: linear-gradient(180deg, #fff7f0 0%, #fffdf9 100%);
+      border-bottom: 1.5px solid #f4e4dc;
+      z-index: 5;
+      flex-shrink: 0;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .stats-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1.5px solid #f2dcd3;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      box-shadow: 0 2px 6px rgba(90, 50, 50, 0.06);
+    }
+
+    .pill.score-pill {
+      border-color: #ffd166;
+      background: #fffbeb;
+      color: #9c5a00;
+    }
+
+    .pill.best-pill {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1.5px solid #f2dcd3;
+      background: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: #fff0f3;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 45s Cry Warning Bar */
+    .cry-meter-box {
+      background: #f5f9ff;
+      border: 1.5px solid #cfe4ff;
+      border-radius: 14px;
+      padding: 7px 11px;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+    }
+
+    .cry-meter-box.crying {
+      background: #eef6ff;
+      border-color: #60a5fa;
+    }
+
+    .cry-meter-box.warn {
+      background: #fff7ed;
+      border-color: #fb923c;
+    }
+
+    .cry-meter-box.danger {
+      background: #fff1f2;
+      border-color: var(--danger);
+      animation: pulseWarn 0.55s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseWarn {
+      from { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.25); }
+      to { transform: scale(1.015); box-shadow: 0 0 14px 2px rgba(230, 57, 70, 0.3); }
+    }
+
+    .cry-meter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .cry-status-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #2c6e49;
+    }
+
+    .cry-meter-box.crying .cry-status-label { color: #1d4ed8; }
+    .cry-meter-box.warn .cry-status-label { color: #c2410c; }
+    .cry-meter-box.danger .cry-status-label { color: var(--danger); }
+
+    .cry-timer-text {
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+
+    .cry-meter-box.crying .cry-timer-text { color: #1d4ed8; }
+    .cry-meter-box.danger .cry-timer-text { color: var(--danger); }
+
+    .cry-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(58, 134, 255, 0.14);
+      overflow: hidden;
+    }
+
+    .cry-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4cc9f0, #3a86ff);
+      transition: width 0.08s linear;
+    }
+
+    .cry-meter-box.warn .cry-fill {
+      background: linear-gradient(90deg, #ffb703, #fb8500);
+    }
+
+    .cry-meter-box.danger .cry-fill {
+      background: linear-gradient(90deg, #ff595e, #d90429);
+    }
+
+    /* Main Interactive Canvas Stage */
+    .stage-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 240px;
+      overflow: hidden;
+      background: #fff5eb;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      max-width: 88%;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid #f4c6d0;
+      border-radius: 18px;
+      padding: 8px 15px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(90, 50, 60, 0.12);
+      pointer-events: none;
+      transition: transform 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      z-index: 4;
+    }
+
+    .speech-bubble.crying {
+      border-color: #60a5fa;
+      background: rgba(240, 248, 255, 0.97);
+      color: #1e3a8a;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .speech-bubble.happy {
+      border-color: #80ed99;
+      background: rgba(246, 255, 248, 0.96);
+      color: #1b4332;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .pet-hint {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(251, 111, 146, 0.3);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #a64d63;
+      pointer-events: none;
+    }
+
+    /* Needs & Care Controls Panel */
+    .care-panel {
+      padding: 10px 14px 14px;
+      background: #fffdf9;
+      border-top: 1.5px solid #f4e4dc;
+      z-index: 5;
+      flex-shrink: 0;
+    }
+
+    .needs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px 10px;
+      margin-bottom: 10px;
+    }
+
+    .need-card {
+      background: #fff7f2;
+      border: 1.5px solid #f3dfd5;
+      border-radius: 13px;
+      padding: 6px 9px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .need-card.low {
+      background: #fff1f2;
+      border-color: #ff758f;
+      animation: gentleShake 1.2s ease-in-out infinite;
+    }
+
+    @keyframes gentleShake {
+      0%, 82%, 100% { transform: translateX(0); }
+      86% { transform: translateX(-2px); }
+      90% { transform: translateX(2px); }
+      94% { transform: translateX(-1.5px); }
+    }
+
+    .need-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .need-val {
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+
+    .need-card.low .need-val {
+      color: var(--danger);
+    }
+
+    .need-track {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(61, 44, 46, 0.1);
+      overflow: hidden;
+    }
+
+    .need-bar {
+      height: 100%;
+      width: 100%;
+      border-radius: 999px;
+      transition: width 0.15s ease;
+    }
+
+    .bar-food { background: linear-gradient(90deg, #ff9f1c, #ffbf69); }
+    .bar-bath { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+    .bar-walk { background: linear-gradient(90deg, #40c057, #8ce99a); }
+    .bar-nails { background: linear-gradient(90deg, #f72585, #ff8fab); }
+
+    /* Action Buttons */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .care-btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 4px 9px;
+      border: 2px solid #f0d7cc;
+      border-radius: 16px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 0 #ebd1c5;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+      overflow: hidden;
+    }
+
+    .care-btn:hover:not(:disabled) {
+      background: #fff6f8;
+      border-color: var(--pink);
+    }
+
+    .care-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #ebd1c5;
+    }
+
+    .care-btn.urgent {
+      border-color: var(--danger);
+      background: #fff0f3;
+      box-shadow: 0 4px 0 #f4a4b3;
+    }
+
+    .care-btn.active-action {
+      border-color: var(--mint);
+      background: #ebfbee;
+      box-shadow: 0 2px 0 #a3e4b5;
+      transform: translateY(2px);
+    }
+
+    .care-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .care-emoji {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .care-label {
+      font-size: 11.5px;
+      font-weight: 800;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .care-key {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #b59b9e;
+    }
+
+    .cd-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: rgba(61, 44, 46, 0.12);
+      pointer-events: none;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(61, 44, 46, 0.45);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+      transition: opacity 0.22s ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 390px;
+      background: #fffdf9;
+      border: 2.5px solid #ffd6e0;
+      border-radius: 26px;
+      padding: 24px 20px 22px;
+      text-align: center;
+      box-shadow: 0 24px 55px rgba(56, 30, 38, 0.28);
+      animation: popUp 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes popUp {
+      from { opacity: 0; transform: translateY(16px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-icon {
+      font-size: 54px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .modal h1 {
+      font-size: 26px;
+      font-weight: 900;
+      color: #d6336c;
+      margin-bottom: 6px;
+    }
+
+    .modal p.desc {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.48;
+      margin-bottom: 16px;
+    }
+
+    .rules-box {
+      text-align: left;
+      background: #fff5f7;
+      border: 1.5px solid #ffd6e0;
+      border-radius: 16px;
+      padding: 12px 13px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .rule-line {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .summary-box {
+      background: #fff5f7;
+      border: 1.5px solid #ffd6e0;
+      border-radius: 14px;
+      padding: 10px 6px;
+    }
+
+    .summary-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .summary-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: #d6336c;
+    }
+
+    .record-tag {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #fff3bf;
+      border: 1.5px solid #fcc419;
+      color: #a65c00;
+      font-size: 12.5px;
+      font-weight: 800;
+    }
+
+    .record-tag.hidden { display: none; }
+
+    .primary-btn {
+      width: 100%;
+      padding: 13px 18px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ff8fab 0%, #fb6f92 100%);
+      color: #fff;
+      font-size: 16.5px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #d6456b, 0 10px 22px rgba(251, 111, 146, 0.35);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+    }
+
+    .primary-btn:hover { filter: brightness(1.04); }
+
+    .primary-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #d6456b;
+    }
+
+    .key-tip {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #f3e5e8;
+      border: 1px solid #e2c9cf;
+      font-weight: 800;
+      font-size: 11px;
+      color: var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Top HUD & 45s Cry Timer -->
+    <div class="top-bar">
+      <div class="top-row">
+        <div class="stats-pills">
+          <div class="pill" title="Thời gian chăm sóc">⏱️ <span id="timeDisplay">00:00</span></div>
+          <div class="pill score-pill" title="Điểm hạnh phúc">💖 <span id="scoreDisplay">0</span></div>
+          <div class="pill best-pill" title="Kỷ lục sống sót">🏆 <span id="bestDisplay">00:00</span></div>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="soundBtn" title="Bật/Tắt âm thanh" aria-label="Âm thanh">🔊</button>
+          <button class="icon-btn" id="pauseBtn" title="Tạm dừng (P)" aria-label="Tạm dừng">⏸️</button>
+        </div>
+      </div>
+
+      <div class="cry-meter-box" id="cryMeterBox">
+        <div class="cry-meter-header">
+          <span class="cry-status-label" id="cryStatusLabel">😊 Bé Mèo đang vui vẻ</span>
+          <span class="cry-timer-text" id="cryTimerText">Khóc: 0.0s / 45.0s</span>
+        </div>
+        <div class="cry-track">
+          <div class="cry-fill" id="cryFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Animated Cat Stage -->
+    <div class="stage-wrap" id="stageWrap">
+      <canvas id="catCanvas"></canvas>
+      <div class="speech-bubble happy" id="speechBubble">Meo meo~ Mình là Mít Ướt, nhớ chăm mình nha! 🐾</div>
+      <div class="pet-hint">👆 Chạm vào bé mèo để vuốt ve!</div>
+    </div>
+
+    <!-- Care Needs & Action Buttons -->
+    <div class="care-panel">
+      <div class="needs-grid">
+        <div class="need-card" id="cardFood">
+          <div class="need-top">
+            <span>🐟 No bụng</span>
+            <span class="need-val" id="valFood">100%</span>
+          </div>
+          <div class="need-track"><div class="need-bar bar-food" id="barFood"></div></div>
+        </div>
+
+        <div class="need-card" id="cardBath">
+          <div class="need-top">
+            <span>🛁 Sạch sẽ</span>
+            <span class="need-val" id="valBath">100%</span>
+          </div>
+          <div class="need-track"><div class="need-bar bar-bath" id="barBath"></div></div>
+        </div>
+
+        <div class="need-card" id="cardWalk">
+          <div class="need-top">
+            <span>🌳 Đi dạo</span>
+            <span class="need-val" id="valWalk">100%</span>
+          </div>
+          <div class="need-track"><div class="need-bar bar-walk" id="barWalk"></div></div>
+        </div>
+
+        <div class="need-card" id="cardNails">
+          <div class="need-top">
+            <span>✂️ Móng gọn</span>
+            <span class="need-val" id="valNails">100%</span>
+          </div>
+          <div class="need-track"><div class="need-bar bar-nails" id="barNails"></div></div>
+        </div>
+      </div>
+
+      <div class="actions-grid">
+        <button class="care-btn" id="btnFood" data-action="food">
+          <span class="care-key">1</span>
+          <span class="care-emoji">🐟</span>
+          <span class="care-label">Cho ăn</span>
+          <div class="cd-overlay" id="cdFood"></div>
+        </button>
+
+        <button class="care-btn" id="btnBath" data-action="bath">
+          <span class="care-key">2</span>
+          <span class="care-emoji">🛁</span>
+          <span class="care-label">Tắm rửa</span>
+          <div class="cd-overlay" id="cdBath"></div>
+        </button>
+
+        <button class="care-btn" id="btnWalk" data-action="walk">
+          <span class="care-key">3</span>
+          <span class="care-emoji">🌳</span>
+          <span class="care-label">Đi dạo</span>
+          <div class="cd-overlay" id="cdWalk"></div>
+        </button>
+
+        <button class="care-btn" id="btnNails" data-action="nails">
+          <span class="care-key">4</span>
+          <span class="care-emoji">✂️</span>
+          <span class="care-label">Cắt móng</span>
+          <div class="cd-overlay" id="cdNails"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Start Overlay -->
+    <div class="overlay" id="startOverlay">
+      <div class="modal">
+        <div class="modal-icon">😿🐾</div>
+        <h1>MÈO MÍT ƯỚT</h1>
+        <p class="desc">Bé mèo này cực kỳ nhạy cảm và siêu hay khóc nhè! Hãy chăm sóc thật chu đáo để bé luôn vui vẻ nhé.</p>
+
+        <div class="rules-box">
+          <div class="rule-line">
+            <span>🥣</span>
+            <span><b>Chăm sóc đủ 4 nhu cầu:</b> Cho ăn, Tắm rửa, Dẫn đi dạo và Cắt móng chân khi chỉ số xuống thấp.</span>
+          </div>
+          <div class="rule-line">
+            <span>😭</span>
+            <span>Khi thiếu nhu cầu hoặc tủi thân, bé sẽ <b>khóc nhè</b> — hãy dỗ ngay để bé nín!</span>
+          </div>
+          <div class="rule-line">
+            <span>⏰</span>
+            <span><b>Luật thua:</b> Nếu để bé mèo khóc nhè quá <b>45 giây</b>, nước mắt ngập nhà và bạn sẽ <b>THUA</b>!</span>
+          </div>
+          <div class="rule-line">
+            <span>🤚</span>
+            <span>Mẹo: Chạm trực tiếp vào bé mèo để <b>vuốt ve</b> làm dịu cơn khóc &amp; kiếm thêm điểm!</span>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="startBtn">BẮT ĐẦU CHĂM MÈO</button>
+        <div class="key-tip">Phím tắt: <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span> chăm sóc • <span class="kbd">Space</span> vuốt ve • <span class="kbd">P</span> tạm dừng</div>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div class="overlay hidden" id="pauseOverlay">
+      <div class="modal">
+        <div class="modal-icon">😴💤</div>
+        <h1>TẠM DỪNG</h1>
+        <p class="desc">Bé Mít Ướt đang tranh thủ chợp mắt một chút...</p>
+        <button class="primary-btn" id="resumeBtn">TIẾP TỤC CHĂM SÓC</button>
+      </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="overlay hidden" id="gameOverOverlay">
+      <div class="modal">
+        <div class="modal-icon">🌊😿</div>
+        <h1>NGẬP NƯỚC MẮT RỒI!</h1>
+        <p class="desc" id="loseMessage">Bé mèo đã khóc nhè quá 45 giây vì bạn chưa kịp dỗ dành!</p>
+        <div class="record-tag hidden" id="recordTag">🏆 KỶ LỤC CHĂM MÈO MỚI!</div>
+
+        <div class="summary-grid">
+          <div class="summary-box">
+            <div class="summary-label">Thời gian</div>
+            <div class="summary-val" id="finalTime">00:00</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">Điểm vui</div>
+            <div class="summary-val" id="finalScore">0</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">Đã dỗ nín</div>
+            <div class="summary-val" id="finalSoothed">0</div>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="restartBtn">CHƠI LẠI</button>
+        <div class="key-tip">Nhấn <span class="kbd">Enter</span> để bắt đầu lượt chăm sóc mới</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      // ============================================================
+      // DOM REFERENCES
+      // ============================================================
+      const canvas = document.getElementById('catCanvas');
+      const ctx = canvas.getContext('2d');
+      const stageWrap = document.getElementById('stageWrap');
+
+      const timeDisplay = document.getElementById('timeDisplay');
+      const scoreDisplay = document.getElementById('scoreDisplay');
+      const bestDisplay = document.getElementById('bestDisplay');
+      const soundBtn = document.getElementById('soundBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+
+      const cryMeterBox = document.getElementById('cryMeterBox');
+      const cryStatusLabel = document.getElementById('cryStatusLabel');
+      const cryTimerText = document.getElementById('cryTimerText');
+      const cryFill = document.getElementById('cryFill');
+      const speechBubble = document.getElementById('speechBubble');
+
+      const startOverlay = document.getElementById('startOverlay');
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const gameOverOverlay = document.getElementById('gameOverOverlay');
+      const startBtn = document.getElementById('startBtn');
+      const resumeBtn = document.getElementById('resumeBtn');
+      const restartBtn = document.getElementById('restartBtn');
+
+      const loseMessage = document.getElementById('loseMessage');
+      const recordTag = document.getElementById('recordTag');
+      const finalTimeEl = document.getElementById('finalTime');
+      const finalScoreEl = document.getElementById('finalScore');
+      const finalSoothedEl = document.getElementById('finalSoothed');
+
+      const needUI = {
+        food: {
+          card: document.getElementById('cardFood'),
+          val: document.getElementById('valFood'),
+          bar: document.getElementById('barFood'),
+          btn: document.getElementById('btnFood'),
+          cd: document.getElementById('cdFood')
+        },
+        bath: {
+          card: document.getElementById('cardBath'),
+          val: document.getElementById('valBath'),
+          bar: document.getElementById('barBath'),
+          btn: document.getElementById('btnBath'),
+          cd: document.getElementById('cdBath')
+        },
+        walk: {
+          card: document.getElementById('cardWalk'),
+          val: document.getElementById('valWalk'),
+          bar: document.getElementById('barWalk'),
+          btn: document.getElementById('btnWalk'),
+          cd: document.getElementById('cdWalk')
+        },
+        nails: {
+          card: document.getElementById('cardNails'),
+          val: document.getElementById('valNails'),
+          bar: document.getElementById('barNails'),
+          btn: document.getElementById('btnNails'),
+          cd: document.getElementById('cdNails')
+        }
+      };
+
+      // ============================================================
+      // WEB AUDIO SOUND SYNTHESIZER
+      // ============================================================
+      let audioCtx = null;
+      let soundOn = true;
+
+      function getAC() {
+        if (!soundOn) return null;
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      }
+
+      function tone(f1, f2, dur, type = 'sine', vol = 0.12, delay = 0) {
+        const ac = getAC();
+        if (!ac) return;
+        const t0 = ac.currentTime + delay;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(f1, t0);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(30, f2), t0 + dur);
+        gain.gain.setValueAtTime(0.001, t0);
+        gain.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+      }
+
+      const SFX = {
+        happyMeow() {
+          tone(520, 780, 0.14, 'triangle', 0.11, 0);
+          tone(780, 620, 0.16, 'triangle', 0.1, 0.12);
+        },
+        cryMeow() {
+          tone(640, 440, 0.22, 'sine', 0.1, 0);
+          tone(460, 340, 0.26, 'sine', 0.09, 0.2);
+        },
+        eat() {
+          tone(360, 480, 0.07, 'triangle', 0.1, 0);
+          tone(420, 560, 0.07, 'triangle', 0.1, 0.14);
+          tone(480, 680, 0.1, 'sine', 0.11, 0.28);
+        },
+        bubble() {
+          tone(580, 960, 0.09, 'sine', 0.09, 0);
+          tone(680, 1120, 0.09, 'sine', 0.08, 0.11);
+        },
+        walk() {
+          tone(440, 554, 0.1, 'triangle', 0.09, 0);
+          tone(554, 659, 0.1, 'triangle', 0.09, 0.11);
+          tone(659, 880, 0.16, 'triangle', 0.1, 0.22);
+        },
+        snip() {
+          tone(1300, 620, 0.05, 'square', 0.06, 0);
+          tone(1450, 700, 0.05, 'square', 0.06, 0.14);
+        },
+        pet() {
+          tone(420, 620, 0.11, 'sine', 0.08, 0);
+        },
+        soothed() {
+          tone(523, 523, 0.09, 'triangle', 0.11, 0);
+          tone(659, 659, 0.09, 'triangle', 0.11, 0.08);
+          tone(784, 1046, 0.2, 'triangle', 0.13, 0.16);
+        },
+        tickWarn() {
+          tone(740, 680, 0.06, 'sine', 0.06, 0);
+        },
+        lose() {
+          tone(420, 330, 0.2, 'sawtooth', 0.1, 0);
+          tone(320, 230, 0.22, 'sawtooth', 0.1, 0.2);
+          tone(220, 120, 0.4, 'triangle', 0.14, 0.42);
+        }
+      };
+
+      // ============================================================
+      // CANVAS SETUP
+      // ============================================================
+      let W = 460;
+      let H = 360;
+      let DPR = 1;
+
+      function resizeCanvas() {
+        const rect = stageWrap.getBoundingClientRect();
+        W = Math.max(280, Math.floor(rect.width));
+        H = Math.max(220, Math.floor(rect.height));
+        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(stageWrap);
+      resizeCanvas();
+
+      // ============================================================
+      // GAME CONSTANTS & STATE
+      // ============================================================
+      const MAX_CRY_SECONDS = 45.0;
+      const CRY_THRESHOLD = 42; // Any need below 42% triggers crying!
+      const STORAGE_KEY = 'meo_mit_uot_best_sec_v1';
+
+      const ACTION_CONFIG = {
+        food: {
+          duration: 1.5,
+          cooldown: 2.2,
+          boost: 48,
+          sideBoost: 6,
+          speech: ['Măm măm! Cá ngon quá đi meo~ 🐟', 'Pate thơm phức, hết buồn liền! 😋', 'Ngon quá, yêu chủ nhất luôn! 💕']
+        },
+        bath: {
+          duration: 1.8,
+          cooldown: 2.5,
+          boost: 50,
+          sideBoost: 6,
+          speech: ['Bong bóng thơm quá nè! 🫧', 'Sạch bong kin kít rồi meo~ ✨', 'Tắm xong lông mượt quá trời! 🛁']
+        },
+        walk: {
+          duration: 2.1,
+          cooldown: 2.8,
+          boost: 52,
+          sideBoost: 8,
+          speech: ['Đi công viên mát quá đi! 🌳', 'Có bươm bướm kìa meo meo! 🦋', 'Chạy tung tăng vui quá trời! ☀️']
+        },
+        nails: {
+          duration: 1.6,
+          cooldown: 2.4,
+          boost: 54,
+          sideBoost: 6,
+          speech: ['Tách tách~ Móng gọn xinh rồi! ✂️', 'Hết bị vướng len rồi nè! 🐾', 'Bàn chân hồng sạch sẽ quá đi! 💖']
+        }
+      };
+
+      const CRY_REASONS = {
+        food: ['Hu hu đói meo râu rồi, cho ăn đi! 🐟', 'Bụng kêu ọt ọt rồi hu hu... 😭', 'Thèm cá hồi quá đi mất meo hu hu! 🍖'],
+        bath: ['Hu hu lông dính bụi ngứa quá, tắm cho bé đi! 🛁', 'Hôi quá đi mất, hu hu muốn tắm! 🫧', 'Bẩn rồi không chịu đâu hu hu! 😭'],
+        walk: ['Hu hu ở nhà chán quá, dẫn đi dạo đi! 🌳', 'Muốn ra công viên ngắm bướm cơ hu hu! 🦋', 'Cuồng chân quá rồi meo hu hu! 🐾'],
+        nails: ['Hu hu móng dài quá cào trúng mặt rồi! ✂️', 'Móng vướng vào chăn rồi hu hu cắt giúp đi! 😭', 'Móng dài khó chịu quá đi mất meo! 💅'],
+        mood: ['Hu hu tự nhiên thấy tủi thân quá, dỗ bé đi! 😿', 'Chẳng ai chơi với bé cả hu hu... 😭']
+      };
+
+      const HAPPY_LINES = [
+        'Meo meo~ Hôm nay vui quá đi! 💕',
+        'Rừ rừ... Chủ chăm mình khéo ghê! ✨',
+        'Đang ngoan lắm nè, không khóc đâu! 😺',
+        'Thích quá đi mất meo meo~ 🌸'
+      ];
+
+      const STATE = { MENU: 'menu', PLAYING: 'playing', PAUSED: 'paused', GAMEOVER: 'gameover' };
+      let gameState = STATE.MENU;
+      let bestSeconds = Number(localStorage.getItem(STORAGE_KEY) || 0);
+      bestDisplay.textContent = formatTime(bestSeconds);
+
+      let elapsed = 0;
+      let score = 0;
+      let criesSoothed = 0;
+      let animTime = 0;
+
+      // Crying state
+      let isCrying = false;
+      let wasCrying = false;
+      let cryTimer = 0; // seconds (game over at 45.0)
+      let crySoundCooldown = 0;
+      let warnBeepCooldown = 0;
+      let moodTantrumTimer = 0; // extra spontaneous crybaby whim!
+      let nextWhimIn = 14;
+      let mainCryNeed = null;
+
+      // Needs 0..100
+      const needs = { food: 85, bath: 88, walk: 86, nails: 90 };
+      const cooldowns = { food: 0, bath: 0, walk: 0, nails: 0 };
+
+      // Active care animation
+      let activeAction = null; // { type, timer, duration }
+      let petCooldown = 0;
+      let happySpeechTimer = 0;
+      let currentSpeech = 'Meo meo~ Mình là Mít Ướt, nhớ chăm mình nha! 🐾';
+      let speechMode = 'happy'; // 'happy' | 'crying'
+
+      // Visual particles
+      let tears = [];
+      let particles = [];
+      let bubbles = [];
+      let butterflies = [];
+      let puddleLevel = 0; // 0..1 rises as cryTimer approaches 45s!
+      let catBounce = 0;
+      let catShake = 0;
+
+      function formatTime(sec) {
+        const s = Math.max(0, Math.floor(sec));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+      }
+
+      function pick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function setSpeech(text, mode = 'happy') {
+        currentSpeech = text;
+        speechMode = mode;
+        speechBubble.textContent = text;
+        speechBubble.classList.remove('happy', 'crying');
+        speechBubble.classList.add(mode);
+      }
+
+      // ============================================================
+      // PARTICLE HELPERS
+      // ============================================================
+      function spawnParticles(x, y, emojiOrColor, count = 10, isEmoji = true) {
+        for (let i = 0; i < count; i++) {
+          const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+          const spd = 45 + Math.random() * 110;
+          particles.push({
+            x: x + (Math.random() - 0.5) * 36,
+            y: y + (Math.random() - 0.5) * 24,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd - 20,
+            life: 0.7 + Math.random() * 0.6,
+            maxLife: 1.3,
+            isEmoji,
+            val: Array.isArray(emojiOrColor) ? emojiOrColor[i % emojiOrColor.length] : emojiOrColor,
+            size: isEmoji ? 16 + Math.random() * 8 : 4 + Math.random() * 4
+          });
+        }
+      }
+
+      function spawnBathBubbles(count = 14) {
+        for (let i = 0; i < count; i++) {
+          bubbles.push({
+            x: W * 0.22 + Math.random() * W * 0.56,
+            y: H * 0.52 + Math.random() * H * 0.25,
+            r: 7 + Math.random() * 14,
+            vy: -28 - Math.random() * 42,
+            wobble: Math.random() * Math.PI * 2,
+            life: 1.6 + Math.random() * 1.4
+          });
+        }
+      }
+
+      function spawnButterflies() {
+        butterflies = [];
+        const colors = ['#ff8fab', '#ffd166', '#4cc9f0', '#c77dff'];
+        for (let i = 0; i < 4; i++) {
+          butterflies.push({
+            x: Math.random() * W,
+            y: 60 + Math.random() * (H * 0.45),
+            vx: (Math.random() < 0.5 ? -1 : 1) * (35 + Math.random() * 35),
+            phase: Math.random() * Math.PI * 2,
+            color: colors[i % colors.length]
+          });
+        }
+      }
+
+      // ============================================================
+      // GAME FLOW
+      // ============================================================
+      function resetGame() {
+        elapsed = 0;
+        score = 0;
+        criesSoothed = 0;
+        isCrying = false;
+        wasCrying = false;
+        cryTimer = 0;
+        crySoundCooldown = 0;
+        warnBeepCooldown = 0;
+        moodTantrumTimer = 0;
+        nextWhimIn = 11;
+        mainCryNeed = null;
+
+        needs.food = 76;
+        needs.bath = 86;
+        needs.walk = 82;
+        needs.nails = 90;
+
+        cooldowns.food = 0;
+        cooldowns.bath = 0;
+        cooldowns.walk = 0;
+        cooldowns.nails = 0;
+
+        activeAction = null;
+        petCooldown = 0;
+        happySpeechTimer = 2.5;
+        puddleLevel = 0;
+        catBounce = 0;
+        catShake = 0;
+
+        tears = [];
+        particles = [];
+        bubbles = [];
+        spawnButterflies();
+
+        setSpeech('Meo meo~ Chăm mình thật kỹ kẻo mình khóc nhè nha! 🐾', 'happy');
+        updateUI();
+      }
+
+      function startGame() {
+        getAC();
+        resetGame();
+        gameState = STATE.PLAYING;
+        startOverlay.classList.add('hidden');
+        pauseOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        pauseBtn.textContent = '⏸️';
+        SFX.happyMeow();
+      }
+
+      function togglePause() {
+        if (gameState === STATE.PLAYING) {
+          gameState = STATE.PAUSED;
+          pauseOverlay.classList.remove('hidden');
+          pauseBtn.textContent = '▶️';
+        } else if (gameState === STATE.PAUSED) {
+          gameState = STATE.PLAYING;
+          pauseOverlay.classList.add('hidden');
+          pauseBtn.textContent = '⏸️';
+          lastFrame = performance.now();
+        }
+      }
+
+      function triggerLose() {
+        gameState = STATE.GAMEOVER;
+        SFX.lose();
+
+        let isNewBest = false;
+        if (Math.floor(elapsed) > bestSeconds) {
+          bestSeconds = Math.floor(elapsed);
+          localStorage.setItem(STORAGE_KEY, String(bestSeconds));
+          bestDisplay.textContent = formatTime(bestSeconds);
+          isNewBest = true;
+        }
+
+        const reasonMap = {
+          food: 'đói bụng quá lâu',
+          bath: 'bẩn và ngứa ngáy quá lâu',
+          walk: 'buồn chán không được đi dạo',
+          nails: 'móng chân dài quá khó chịu',
+          mood: 'tủi thân không được dỗ dành'
+        };
+        const why = reasonMap[mainCryNeed] || 'không được chăm sóc kịp thời';
+        loseMessage.textContent = `Bé Mít Ướt đã khóc nhè quá 45 giây vì ${why}! Nước mắt ngập cả phòng rồi!`;
+
+        finalTimeEl.textContent = formatTime(elapsed);
+        finalScoreEl.textContent = String(Math.floor(score));
+        finalSoothedEl.textContent = String(criesSoothed);
+        recordTag.classList.toggle('hidden', !isNewBest);
+
+        gameOverOverlay.classList.remove('hidden');
+      }
+
+      // ============================================================
+      // PLAYER ACTIONS
+      // ============================================================
+      function performCare(type) {
+        if (gameState !== STATE.PLAYING) return;
+        if (activeAction) return; // Wait for current pampering animation to finish (~1.5s)
+        if (cooldowns[type] > 0) return;
+
+        const cfg = ACTION_CONFIG[type];
+        activeAction = { type, timer: cfg.duration, duration: cfg.duration };
+        cooldowns[type] = cfg.duration + cfg.cooldown;
+        moodTantrumTimer = 0;
+
+        // Apply immediate boost + small side comfort
+        needs[type] = Math.min(100, needs[type] + cfg.boost);
+        for (const k of Object.keys(needs)) {
+          if (k !== type) needs[k] = Math.min(100, needs[k] + cfg.sideBoost);
+        }
+
+        // Reward points & bounce
+        const bonus = isCrying ? 35 : 15;
+        score += bonus;
+        catBounce = 1.0;
+
+        // Check if this action soothed crying
+        const stillLow = getLowestNeed().val < CRY_THRESHOLD;
+        if (isCrying && !stillLow) {
+          criesSoothed += 1;
+          score += 25;
+          SFX.soothed();
+          spawnParticles(W / 2, H * 0.44, ['💖', '✨', '🌟', '🎵'], 12, true);
+        } else {
+          if (type === 'food') SFX.eat();
+          else if (type === 'bath') SFX.bubble();
+          else if (type === 'walk') SFX.walk();
+          else if (type === 'nails') SFX.snip();
+        }
+
+        if (type === 'food') spawnParticles(W / 2, H * 0.5, ['🐟', '🍖', '✨', '💛'], 9, true);
+        if (type === 'bath') spawnBathBubbles(18);
+        if (type === 'walk') {
+          spawnButterflies();
+          spawnParticles(W / 2, H * 0.5, ['🌸', '🍃', '☀️', '🐾'], 10, true);
+        }
+        if (type === 'nails') spawnParticles(W / 2, H * 0.56, ['✂️', '✨', '💅', '⭐'], 9, true);
+
+        setSpeech(pick(cfg.speech), 'happy');
+        happySpeechTimer = cfg.duration + 1.4;
+        updateUI();
+      }
+
+      function petCat(clickX, clickY) {
+        if (gameState !== STATE.PLAYING) return;
+        if (petCooldown > 0) return;
+        petCooldown = 0.55;
+
+        // Pop nearby bath bubbles if clicked!
+        let popped = false;
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          const b = bubbles[i];
+          const dx = clickX - b.x;
+          const dy = clickY - b.y;
+          if (dx * dx + dy * dy <= (b.r + 14) * (b.r + 14)) {
+            bubbles.splice(i, 1);
+            score += 5;
+            SFX.bubble();
+            spawnParticles(b.x, b.y, ['🫧', '✨'], 3, true);
+            popped = true;
+            break;
+          }
+        }
+        if (popped) return;
+
+        // Petting comforts kitty, shaves 1.8s off cry timer, and gently bumps lowest need a tiny bit
+        catBounce = 0.65;
+        score += 4;
+        if (moodTantrumTimer > 0) moodTantrumTimer = Math.max(0, moodTantrumTimer - 3.5);
+        if (cryTimer > 0) cryTimer = Math.max(0, cryTimer - 1.6);
+
+        const lowest = getLowestNeed();
+        needs[lowest.key] = Math.min(100, needs[lowest.key] + 3.5);
+
+        SFX.pet();
+        spawnParticles(clickX || W / 2, clickY || H * 0.48, ['💕', '💖', '✨'], 5, true);
+
+        if (!isCrying && !activeAction) {
+          setSpeech('Rừ rừ~ Vuốt ve thích quá đi meo! 💕', 'happy');
+          happySpeechTimer = 1.6;
+        }
+      }
+
+      function getLowestNeed() {
+        let minKey = 'food';
+        let minVal = needs.food;
+        for (const k of ['bath', 'walk', 'nails']) {
+          if (needs[k] < minVal) {
+            minVal = needs[k];
+            minKey = k;
+          }
+        }
+        return { key: minKey, val: minVal };
+      }
+
+      // ============================================================
+      // INPUT LISTENERS
+      // ============================================================
+      Object.entries(needUI).forEach(([key, ui]) => {
+        ui.btn.addEventListener('click', () => performCare(key));
+      });
+
+      canvas.addEventListener('pointerdown', (e) => {
+        if (gameState !== STATE.PLAYING) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        petCat(x, y);
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Digit1') performCare('food');
+        else if (e.code === 'Digit2') performCare('bath');
+        else if (e.code === 'Digit3') performCare('walk');
+        else if (e.code === 'Digit4') performCare('nails');
+        else if (e.code === 'Space') {
+          e.preventDefault();
+          if (gameState === STATE.PLAYING) petCat(W / 2, H * 0.5);
+          else if (gameState === STATE.MENU) startGame();
+        } else if (e.code === 'Enter') {
+          if (gameState === STATE.MENU || gameState === STATE.GAMEOVER) startGame();
+        } else if (e.code === 'KeyP' || e.code === 'Escape') {
+          if (gameState === STATE.PLAYING || gameState === STATE.PAUSED) togglePause();
+        }
+      });
+
+      startBtn.addEventListener('click', startGame);
+      resumeBtn.addEventListener('click', togglePause);
+      restartBtn.addEventListener('click', startGame);
+      pauseBtn.addEventListener('click', () => {
+        if (gameState === STATE.PLAYING || gameState === STATE.PAUSED) togglePause();
+      });
+
+      soundBtn.addEventListener('click', () => {
+        soundOn = !soundOn;
+        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+        if (soundOn) SFX.pet();
+      });
+
+      // ============================================================
+      // UPDATE LOOP
+      // ============================================================
+      function update(dt) {
+        animTime += dt;
+
+        // Ambient particles & bubbles update
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life -= dt;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += 120 * dt;
+        }
+
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          const b = bubbles[i];
+          b.life -= dt;
+          if (b.life <= 0) { bubbles.splice(i, 1); continue; }
+          b.y += b.vy * dt;
+          b.x += Math.sin(animTime * 3.5 + b.wobble) * 16 * dt;
+        }
+
+        for (let i = tears.length - 1; i >= 0; i--) {
+          const t = tears[i];
+          t.life -= dt;
+          if (t.life <= 0) { tears.splice(i, 1); continue; }
+          t.vy += 520 * dt;
+          t.x += t.vx * dt;
+          t.y += t.vy * dt;
+        }
+
+        for (const bf of butterflies) {
+          bf.x += bf.vx * dt;
+          bf.y += Math.sin(animTime * 5 + bf.phase) * 26 * dt;
+          if (bf.x < -25) bf.x = W + 25;
+          if (bf.x > W + 25) bf.x = -25;
+        }
+
+        if (catBounce > 0) catBounce = Math.max(0, catBounce - dt * 2.8);
+        if (petCooldown > 0) petCooldown = Math.max(0, petCooldown - dt);
+
+        if (gameState !== STATE.PLAYING) return;
+
+        elapsed += dt;
+        // Difficulty gently scales up over time (caps at 1.95x)
+        const speedMult = Math.min(1.95, 1 + elapsed / 150);
+
+        // Cooldowns
+        for (const k of Object.keys(cooldowns)) {
+          if (cooldowns[k] > 0) cooldowns[k] = Math.max(0, cooldowns[k] - dt);
+        }
+
+        // Active care animation timer
+        if (activeAction) {
+          activeAction.timer -= dt;
+          if (activeAction.type === 'bath' && Math.random() < dt * 7) {
+            spawnBathBubbles(1);
+          }
+          if (activeAction.timer <= 0) {
+            activeAction = null;
+          }
+        }
+
+        // Natural need decay (different rhythms so they don't all drop at once)
+        const baseDecay = { food: 4.3, bath: 3.1, walk: 3.6, nails: 2.7 };
+        for (const k of Object.keys(needs)) {
+          const isBeingCared = activeAction && activeAction.type === k;
+          if (!isBeingCared) {
+            needs[k] = Math.max(0, needs[k] - baseDecay[k] * speedMult * dt);
+          }
+        }
+
+        // Random "Mít Ướt" crybaby whim events to keep the kitty lively & expressive!
+        nextWhimIn -= dt;
+        if (nextWhimIn <= 0) {
+          nextWhimIn = Math.max(9, 17 - elapsed * 0.04) + Math.random() * 6;
+          if (!activeAction) {
+            const keys = ['food', 'bath', 'walk', 'nails'];
+            const chosen = pick(keys);
+            needs[chosen] = Math.max(15, needs[chosen] - 24);
+            // Small chance of pure crybaby tantrum
+            if (needs[chosen] >= CRY_THRESHOLD) {
+              moodTantrumTimer = 7.0;
+            }
+          }
+        }
+
+        if (moodTantrumTimer > 0) {
+          moodTantrumTimer = Math.max(0, moodTantrumTimer - dt);
+        }
+
+        // Determine crying state
+        const lowest = getLowestNeed();
+        const needsCrying = lowest.val < CRY_THRESHOLD || moodTantrumTimer > 0;
+        isCrying = !activeAction && needsCrying;
+
+        if (isCrying) {
+          mainCryNeed = lowest.val < CRY_THRESHOLD ? lowest.key : 'mood';
+          cryTimer += dt;
+          catShake = Math.min(1, 0.4 + (cryTimer / MAX_CRY_SECONDS) * 0.8);
+          puddleLevel = Math.min(1, cryTimer / MAX_CRY_SECONDS);
+
+          // Spawn tears continuously!
+          const tearRate = 12 + (cryTimer / MAX_CRY_SECONDS) * 24;
+          if (Math.random() < dt * tearRate) {
+            const cx = W / 2;
+            const cy = H * 0.47;
+            const side = Math.random() < 0.5 ? -1 : 1;
+            tears.push({
+              x: cx + side * 24,
+              y: cy + 2,
+              vx: side * (26 + Math.random() * 44),
+              vy: -35 - Math.random() * 45,
+              r: 3.5 + Math.random() * 3,
+              life: 0.95
+            });
+          }
+
+          // Update crying speech bubble when transitioning or periodically
+          if (!wasCrying || happySpeechTimer <= 0) {
+            setSpeech(pick(CRY_REASONS[mainCryNeed]), 'crying');
+            happySpeechTimer = 3.8;
+          }
+
+          // Occasional sad meow
+          crySoundCooldown -= dt;
+          if (crySoundCooldown <= 0) {
+            SFX.cryMeow();
+            crySoundCooldown = Math.max(2.6, 5.2 - (cryTimer / MAX_CRY_SECONDS) * 2.2);
+          }
+
+          // Urgent warning beep above 35s
+          if (cryTimer >= 35) {
+            warnBeepCooldown -= dt;
+            if (warnBeepCooldown <= 0) {
+              SFX.tickWarn();
+              warnBeepCooldown = cryTimer >= 40 ? 0.55 : 1.0;
+            }
+          }
+
+          // Check 45-second lose condition!
+          if (cryTimer >= MAX_CRY_SECONDS) {
+            cryTimer = MAX_CRY_SECONDS;
+            updateUI();
+            triggerLose();
+            return;
+          }
+        } else {
+          // Kitty is NOT crying: earn score & rapidly dry up the cry timer!
+          catShake = 0;
+          if (!activeAction) {
+            score += 4.5 * dt;
+          }
+          // When happy (all needs satisfied), cry timer drains swiftly back to 0
+          if (cryTimer > 0) {
+            const recoverRate = activeAction ? 6.0 : 14.0;
+            cryTimer = Math.max(0, cryTimer - recoverRate * dt);
+          }
+          puddleLevel = Math.max(0, puddleLevel - dt * 0.35);
+
+          if (wasCrying && !activeAction) {
+            criesSoothed += 1;
+            score += 20;
+            SFX.soothed();
+            setSpeech('Hết khóc rồi nè! Cảm ơn chủ nhiều lắm! ✨', 'happy');
+            happySpeechTimer = 2.6;
+          }
+        }
+
+        if (happySpeechTimer > 0) {
+          happySpeechTimer -= dt;
+        } else if (!isCrying && !activeAction) {
+          setSpeech(pick(HAPPY_LINES), 'happy');
+          happySpeechTimer = 5.5;
+        }
+
+        wasCrying = isCrying;
+        updateUI();
+      }
+
+      // ============================================================
+      // DOM HUD UPDATE
+      // ============================================================
+      function updateUI() {
+        timeDisplay.textContent = formatTime(elapsed);
+        scoreDisplay.textContent = String(Math.floor(score));
+        if (Math.floor(elapsed) > bestSeconds) {
+          bestDisplay.textContent = formatTime(elapsed);
+        }
+
+        // Cry meter UI
+        const pct = Math.min(100, (cryTimer / MAX_CRY_SECONDS) * 100);
+        cryFill.style.width = `${pct.toFixed(1)}%`;
+        cryTimerText.textContent = `Khóc: ${cryTimer.toFixed(1)}s / 45.0s`;
+
+        cryMeterBox.classList.remove('crying', 'warn', 'danger');
+        if (cryTimer >= 35) {
+          cryMeterBox.classList.add('danger');
+          cryStatusLabel.textContent = '🚨 Sắp ngập nước mắt! Dỗ ngay!';
+        } else if (cryTimer >= 22) {
+          cryMeterBox.classList.add('warn');
+          cryStatusLabel.textContent = '😭 Bé đang khóc rất to!';
+        } else if (isCrying || cryTimer > 0.1) {
+          cryMeterBox.classList.add('crying');
+          cryStatusLabel.textContent = '😢 Bé Mít Ướt đang khóc nhè!';
+        } else if (activeAction) {
+          const actLabel = {
+            food: '🐟 Đang măm măm ngon lành...',
+            bath: '🛁 Đang tắm bong bóng thơm tho...',
+            walk: '🌳 Đang dạo chơi công viên...',
+            nails: '✂️ Đang cắt móng gọn gàng...'
+          }[activeAction.type];
+          cryStatusLabel.textContent = actLabel;
+        } else {
+          cryStatusLabel.textContent = '😊 Bé Mèo đang rất vui vẻ!';
+        }
+
+        // Needs & buttons
+        for (const k of Object.keys(needs)) {
+          const val = Math.round(needs[k]);
+          const ui = needUI[k];
+          ui.val.textContent = `${val}%`;
+          ui.bar.style.width = `${val}%`;
+
+          const isLow = val < CRY_THRESHOLD;
+          ui.card.classList.toggle('low', isLow);
+          ui.btn.classList.toggle('urgent', isLow && !(activeAction && activeAction.type === k));
+          ui.btn.classList.toggle('active-action', Boolean(activeAction && activeAction.type === k));
+
+          const maxCd = ACTION_CONFIG[k].duration + ACTION_CONFIG[k].cooldown;
+          const cdPct = Math.min(100, (cooldowns[k] / maxCd) * 100);
+          ui.cd.style.height = `${cdPct.toFixed(0)}%`;
+          ui.btn.disabled = Boolean(activeAction) || cooldowns[k] > 0;
+        }
+      }
+
+      // ============================================================
+      // CANVAS ARTWORK: ROOM / PARK + EXPRESSIVE CRYBABY CAT
+      // ============================================================
+      function drawSceneBackground() {
+        const isWalking = activeAction && activeAction.type === 'walk';
+
+        if (isWalking) {
+          // Sunny park outdoors!
+          const sky = ctx.createLinearGradient(0, 0, 0, H);
+          sky.addColorStop(0, '#bae6fd');
+          sky.addColorStop(0.62, '#e0f2fe');
+          sky.addColorStop(0.62, '#a7f3d0');
+          sky.addColorStop(1, '#6ee7b7');
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, W, H);
+
+          // Sun
+          ctx.fillStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(W - 58, 56, 26, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Soft rolling hills
+          ctx.fillStyle = '#86efac';
+          ctx.beginPath();
+          ctx.ellipse(W * 0.25, H * 0.68, W * 0.45, 55, 0, 0, Math.PI * 2);
+          ctx.ellipse(W * 0.8, H * 0.7, W * 0.4, 50, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Garden path
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.ellipse(W / 2, H * 0.84, W * 0.46, 36, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Butterflies
+          for (const bf of butterflies) {
+            const wing = Math.abs(Math.sin(animTime * 16 + bf.phase)) * 7 + 3;
+            ctx.save();
+            ctx.translate(bf.x, bf.y);
+            ctx.fillStyle = bf.color;
+            ctx.beginPath();
+            ctx.ellipse(-5, -2, wing, 5, -0.3, 0, Math.PI * 2);
+            ctx.ellipse(5, -2, wing, 5, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+          return;
+        }
+
+        // Cozy pastel room
+        const wall = ctx.createLinearGradient(0, 0, 0, H);
+        wall.addColorStop(0, '#fff4eb');
+        wall.addColorStop(0.68, '#ffeadc');
+        wall.addColorStop(0.68, '#f4d3b8');
+        wall.addColorStop(1, '#e8bc9a');
+        ctx.fillStyle = wall;
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle wallpaper polka dots
+        ctx.fillStyle = 'rgba(255, 181, 167, 0.22)';
+        for (let x = 24; x < W; x += 48) {
+          for (let y = 26; y < H * 0.66; y += 44) {
+            ctx.beginPath();
+            ctx.arc(x + ((y / 44) % 2) * 20, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Sunny arched window
+        const wx = W * 0.16;
+        const wy = H * 0.14;
+        const ww = 74;
+        const wh = 86;
+        ctx.save();
+        ctx.fillStyle = isCrying ? '#cbd5e1' : '#bae6fd';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.roundRect(wx, wy, ww, wh, [36, 36, 6, 6]);
+        ctx.fill();
+        ctx.stroke();
+
+        // Window panes
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(wx + ww / 2, wy);
+        ctx.lineTo(wx + ww / 2, wy + wh);
+        ctx.moveTo(wx, wy + wh * 0.55);
+        ctx.lineTo(wx + ww, wy + wh * 0.55);
+        ctx.stroke();
+        ctx.restore();
+
+        // Cozy round rug under kitty
+        ctx.fillStyle = '#ffd6e0';
+        ctx.strokeStyle = '#ffadc2';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(W / 2, H * 0.81, Math.min(148, W * 0.36), 34, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Baseboard line
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.fillRect(0, H * 0.68 - 4, W, 6);
+      }
+
+      function drawTearPuddle() {
+        if (puddleLevel <= 0.01) return;
+        const rx = 50 + puddleLevel * (W * 0.45);
+        const ry = 12 + puddleLevel * 30;
+        const py = H * 0.82;
+
+        ctx.save();
+        ctx.fillStyle = `rgba(76, 201, 240, ${0.35 + puddleLevel * 0.38})`;
+        ctx.beginPath();
+        ctx.ellipse(W / 2, py, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Water highlight ripples
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.45 + puddleLevel * 0.3})`;
+        ctx.lineWidth = 2;
+        const rip = (animTime * 28) % 24;
+        ctx.beginPath();
+        ctx.ellipse(W / 2, py, Math.max(10, rx * 0.45 + rip * 0.5), Math.max(4, ry * 0.4), 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Rising flood water at very high cry timer (> 34s)
+        if (cryTimer > 34) {
+          const floodH = ((cryTimer - 34) / 11) * (H * 0.28);
+          const waveY = H - floodH;
+          ctx.fillStyle = 'rgba(58, 134, 255, 0.28)';
+          ctx.beginPath();
+          ctx.moveTo(0, H);
+          for (let x = 0; x <= W; x += 20) {
+            ctx.lineTo(x, waveY + Math.sin(x * 0.05 + animTime * 6) * 5);
+          }
+          ctx.lineTo(W, H);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawCat() {
+        const cx = W / 2;
+        const baseY = H * 0.62;
+        const breathe = Math.sin(animTime * 3.4) * 2.5;
+        const walkHop = activeAction && activeAction.type === 'walk' ? Math.abs(Math.sin(animTime * 11)) * 12 : 0;
+        const bounceOffset = Math.sin(catBounce * Math.PI) * 16;
+        const shakeX = isCrying ? Math.sin(animTime * 38) * (2.5 * catShake) : 0;
+
+        const x = cx + shakeX;
+        const y = baseY - bounceOffset - walkHop;
+
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Soft shadow on rug
+        ctx.fillStyle = 'rgba(90, 52, 58, 0.14)';
+        ctx.beginPath();
+        ctx.ellipse(0, 62 + bounceOffset * 0.5 + walkHop * 0.5, 56 - bounceOffset * 0.3, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Animated tail behind body
+        const tailWag = isCrying ? Math.sin(animTime * 4) * 6 : Math.sin(animTime * 6.5) * 20;
+        ctx.strokeStyle = '#f4a261';
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(32, 34);
+        ctx.quadraticCurveTo(68, 22 + tailWag * 0.4, 62 + tailWag * 0.5, -18 + tailWag * 0.3);
+        ctx.stroke();
+
+        // Tail stripes
+        ctx.strokeStyle = '#d97736';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(56, 6);
+        ctx.lineTo(66, 2);
+        ctx.moveTo(59, -8);
+        ctx.lineTo(67, -11);
+        ctx.stroke();
+
+        // Chubby kitty body
+        ctx.fillStyle = '#ffb770';
+        ctx.strokeStyle = '#6b4226';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 22 + breathe * 0.4, 48, 44 - breathe * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Cream belly patch
+        ctx.fillStyle = '#fff3e2';
+        ctx.beginPath();
+        ctx.ellipse(0, 28 + breathe * 0.3, 30, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cute red collar + gold bell
+        ctx.strokeStyle = '#fb6f92';
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(0, -14, 34, 0.28 * Math.PI, 0.72 * Math.PI);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffd166';
+        ctx.strokeStyle = '#9c5a00';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 18, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Little feet / paws
+        const isTrimming = activeAction && activeAction.type === 'nails';
+        const dirtyNails = needs.nails < CRY_THRESHOLD;
+
+        for (const side of [-1, 1]) {
+          const pawLift = isTrimming && side === 1 ? -18 : 0;
+          ctx.save();
+          ctx.translate(side * 24, 56 + pawLift);
+          ctx.fillStyle = '#fff3e2';
+          ctx.strokeStyle = '#6b4226';
+          ctx.lineWidth = 2.6;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 15, 11, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Pink toe beans when paw lifted
+          if (isTrimming && side === 1) {
+            ctx.fillStyle = '#ff8fab';
+            ctx.beginPath();
+            ctx.arc(0, 1, 4, 0, Math.PI * 2);
+            ctx.arc(-6, -4, 2.3, 0, Math.PI * 2);
+            ctx.arc(0, -6, 2.3, 0, Math.PI * 2);
+            ctx.arc(6, -4, 2.3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Visible long claws when nails need trimming!
+          if (dirtyNails && !isTrimming) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2.5;
+            for (const dx of [-6, 0, 6]) {
+              ctx.beginPath();
+              ctx.moveTo(dx, 8);
+              ctx.lineTo(dx + side * 2, 16);
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+
+        // Head group
+        ctx.save();
+        const headTilt = isCrying ? Math.sin(animTime * 6) * 0.05 : Math.sin(animTime * 2.2) * 0.03;
+        ctx.translate(0, -34 + breathe * 0.5);
+        ctx.rotate(headTilt);
+
+        // Ears (droop slightly when crying!)
+        const earDroop = isCrying ? 0.24 : 0;
+        for (const side of [-1, 1]) {
+          ctx.save();
+          ctx.translate(side * 34, -26);
+          ctx.rotate(side * earDroop);
+
+          ctx.fillStyle = '#ffb770';
+          ctx.strokeStyle = '#6b4226';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-side * 14, 6);
+          ctx.lineTo(side * 6, -26);
+          ctx.lineTo(side * 20, 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffadc2';
+          ctx.beginPath();
+          ctx.moveTo(-side * 7, 5);
+          ctx.lineTo(side * 5, -16);
+          ctx.lineTo(side * 13, 8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Round plush head
+        ctx.fillStyle = '#ffb770';
+        ctx.strokeStyle = '#6b4226';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 52, 43, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Forehead tabby stripes
+        ctx.fillStyle = '#d97736';
+        ctx.beginPath();
+        ctx.roundRect(-4, -41, 8, 16, 4);
+        ctx.roundRect(-16, -38, 6, 13, 3);
+        ctx.roundRect(10, -38, 6, 13, 3);
+        ctx.fill();
+
+        // Dirty smudges if bath is low!
+        if (needs.bath < CRY_THRESHOLD && !(activeAction && activeAction.type === 'bath')) {
+          ctx.fillStyle = 'rgba(120, 88, 64, 0.35)';
+          ctx.beginPath();
+          ctx.ellipse(-28, 10, 9, 6, 0.2, 0, Math.PI * 2);
+          ctx.ellipse(26, -12, 7, 5, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Foam bubble crown during bath!
+        if (activeAction && activeAction.type === 'bath') {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 2;
+          const foams = [[-16, -40, 12], [0, -45, 15], [16, -39, 11], [-6, -36, 10], [8, -36, 10]];
+          for (const [fx, fy, fr] of foams) {
+            ctx.beginPath();
+            ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+
+        // Rosy cheeks
+        ctx.fillStyle = isCrying ? 'rgba(255, 117, 143, 0.55)' : 'rgba(255, 143, 171, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(-30, 12, 10, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(30, 12, 10, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes & Tear Waterfalls!
+        const isEating = activeAction && activeAction.type === 'food';
+        const isPampered = Boolean(activeAction) || catBounce > 0.2;
+
+        if (isCrying) {
+          // Twin anime waterfalls of tears!
+          const streamW = 10 + Math.sin(animTime * 18) * 2;
+          ctx.fillStyle = 'rgba(76, 201, 240, 0.72)';
+          for (const side of [-1, 1]) {
+            ctx.beginPath();
+            ctx.moveTo(side * 20 - streamW / 2, 4);
+            ctx.quadraticCurveTo(side * 26, 36, side * 29 + Math.sin(animTime * 14 + side) * 3, 94);
+            ctx.lineTo(side * 29 - streamW + Math.sin(animTime * 14 + side) * 3, 94);
+            ctx.quadraticCurveTo(side * 16, 36, side * 20 + streamW / 2, 4);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // Teary shimmering big eyes
+          for (const side of [-1, 1]) {
+            const ex = side * 20;
+            ctx.fillStyle = '#2d1e1f';
+            ctx.beginPath();
+            ctx.ellipse(ex, -2, 10, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Big watery specular highlights
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ex - 3, -6, 4.2, 0, Math.PI * 2);
+            ctx.arc(ex + 3, 2, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Watery rim at bottom of eye
+            ctx.fillStyle = '#90e0ef';
+            ctx.beginPath();
+            ctx.ellipse(ex, 6, 8.5, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sad tilted eyebrows
+            ctx.strokeStyle = '#6b4226';
+            ctx.lineWidth = 2.6;
+            ctx.beginPath();
+            ctx.moveTo(ex - side * 10, -15);
+            ctx.lineTo(ex + side * 8, -20);
+            ctx.stroke();
+          }
+
+          // Wobbly crying mouth
+          ctx.fillStyle = '#e63946';
+          ctx.strokeStyle = '#6b4226';
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.ellipse(0, 17, 10 + Math.sin(animTime * 18) * 1.5, 8 + Math.cos(animTime * 18) * 1.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (isPampered) {
+          // Super happy ^ ^ eyes!
+          ctx.strokeStyle = '#3d2c2e';
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = 'round';
+          for (const side of [-1, 1]) {
+            ctx.beginPath();
+            ctx.arc(side * 20, 0, 9, Math.PI * 1.12, Math.PI * 1.88);
+            ctx.stroke();
+          }
+        } else {
+          // Cute blinking round sparkle eyes
+          const blink = (animTime % 4.2) > 4.06;
+          for (const side of [-1, 1]) {
+            const ex = side * 20;
+            if (blink) {
+              ctx.strokeStyle = '#3d2c2e';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(ex - 8, -1);
+              ctx.lineTo(ex + 8, -1);
+              ctx.stroke();
+            } else {
+              ctx.fillStyle = '#2d1e1f';
+              ctx.beginPath();
+              ctx.ellipse(ex, -2, 8.5, 9.5, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#fff';
+              ctx.beginPath();
+              ctx.arc(ex - 2.5, -5.5, 3.2, 0, Math.PI * 2);
+              ctx.arc(ex + 3, 1.5, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+
+        // Little pink triangle nose
+        ctx.fillStyle = '#fb6f92';
+        ctx.beginPath();
+        ctx.moveTo(-4, 6);
+        ctx.lineTo(4, 6);
+        ctx.lineTo(0, 10.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Happy "w" mouth (or chewing mouth while eating)
+        if (!isCrying) {
+          ctx.strokeStyle = '#6b4226';
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = 'round';
+          if (isEating) {
+            const chew = Math.abs(Math.sin(animTime * 16));
+            ctx.fillStyle = '#ff758f';
+            ctx.beginPath();
+            ctx.ellipse(0, 16, 7, 3 + chew * 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.arc(-5, 13, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(5, 13, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+          }
+        }
+
+        // Whiskers
+        ctx.strokeStyle = '#6b4226';
+        ctx.lineWidth = 2;
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(side * 36, 4);
+          ctx.lineTo(side * 58, 0);
+          ctx.moveTo(side * 36, 10);
+          ctx.lineTo(side * 58, 12);
+          ctx.stroke();
+        }
+
+        ctx.restore(); // end head
+
+        // Action Props (Fish bowl, Scissors, Leash)
+        if (activeAction && activeAction.type === 'food') {
+          ctx.font = '32px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🐟', 0, 46 + Math.sin(animTime * 16) * 3);
+        } else if (activeAction && activeAction.type === 'nails') {
+          ctx.save();
+          ctx.translate(46, 36);
+          ctx.rotate(-0.4 + Math.sin(animTime * 18) * 0.25);
+          ctx.font = '28px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✂️', 0, 0);
+          ctx.restore();
+        } else if (activeAction && activeAction.type === 'walk') {
+          // Cute walking leash curving up
+          ctx.strokeStyle = '#fb6f92';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(14, 14);
+          ctx.quadraticCurveTo(64, -10, 110, -70);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function drawEffects() {
+        // Flying teardrops
+        for (const t of tears) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, t.life);
+          ctx.fillStyle = '#4cc9f0';
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(t.x - 1.2, t.y - 1.2, t.r * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Iridescent soap bubbles
+        for (const b of bubbles) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.88, b.life);
+          const grad = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, 1, b.x, b.y, b.r);
+          grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+          grad.addColorStop(0.55, 'rgba(186,230,253,0.45)');
+          grad.addColorStop(1, 'rgba(244,114,182,0.5)');
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Emoji & sparkle particles
+        for (const p of particles) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+          if (p.isEmoji) {
+            ctx.font = `${Math.round(p.size)}px system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(p.val, p.x, p.y);
+          } else {
+            ctx.fillStyle = p.val;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      function render() {
+        drawSceneBackground();
+        drawTearPuddle();
+        drawCat();
+        drawEffects();
+      }
+
+      // ============================================================
+      // MAIN ANIMATION LOOP
+      // ============================================================
+      let lastFrame = performance.now();
+
+      function loop(now) {
+        const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+        lastFrame = now;
+        update(dt);
+        render();
+        requestAnimationFrame(loop);
+      }
+
+      resetGame();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
